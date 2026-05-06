@@ -1,50 +1,122 @@
-# Welcome to your Expo app 👋
+# Mini App de Salud Personal
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicación móvil multiplataforma para llevar el control diario de tus medidas
+de salud. Permite a una persona registrar su perfil y anotar lecturas de
+**azúcar en sangre** y **presión arterial**, y luego consultar un resumen con
+estadísticas y las últimas medidas registradas.
 
-## Get started
+> Proyecto desarrollado como **Actividad 2 (Grupo 4)** del módulo de
+> aplicaciones móviles
 
-1. Install dependencies
+##  Funcionalidad
 
-   ```bash
-   npm install
-   ```
+-  **Perfil**: registra tu nombre, edad, peso y altura. La primera vez es un
+  alta de bienvenida; después la misma vista te permite editar tus datos.
+-  **Inicio**: pantalla de bienvenida con un resumen de tus últimas medidas y
+  un botón destacado para añadir una nueva lectura.
+-  **Nueva medida**: registra glucosa (mg/dL) o presión arterial
+  (sistólica/diastólica + pulso opcional) con notas y validación inline.
+-  **Resumen**: estadísticas (recuento, media, mínimo, máximo) calculadas en
+  tiempo real para cada tipo de medida + tabla con las últimas 10 lecturas.
+-  **Borrado**: cada medida se puede borrar con confirmación desde su card.
+-  **Modo oscuro**: la app cambia automáticamente al esquema oscuro/claro
+  según la configuración del sistema operativo.
 
-2. Start the app
+##  Tecnologías y herramientas
 
-   ```bash
-   npx expo start
-   ```
+| Herramienta | Versión | Para qué se usa |
+|-------------|---------|-----------------|
+| [Expo](https://expo.dev) | SDK 54 | Framework de React Native, build, simulador |
+| [React Native](https://reactnative.dev) | 0.81 | UI multiplataforma iOS/Android |
+| [React](https://react.dev) | 19.1 | Librería base de componentes |
+| [TypeScript](https://www.typescriptlang.org) | 5.9 | Tipado estático del código |
+| [Expo Router](https://docs.expo.dev/router/introduction/) | 6.0 | Navegación con Stack + Tabs por sistema de archivos |
+| [Expo SQLite](https://docs.expo.dev/versions/latest/sdk/sqlite/) | 16.0 | Persistencia local (perfil + medidas) |
+| [Expo Linear Gradient](https://docs.expo.dev/versions/latest/sdk/linear-gradient/) | 15.0 | Degradados visuales (header, botones) |
+| [@expo/vector-icons](https://icons.expokit.app) | 15.0 | Iconos (Ionicons) |
+| [Yarn](https://classic.yarnpkg.com) | 1.22 | Gestor de paquetes |
+| iOS Simulator (Xcode) | — | Emulador nativo de macOS para pruebas |
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+##  Cómo arrancar el proyecto
 
 ```bash
-npm run reset-project
+# 1. Instalar dependencias
+yarn install
+
+# 2. Lanzar Metro y abrir en el simulador iOS
+yarn ios
+
+# Otras opciones
+yarn android   # emulador Android
+yarn web       # navegador
+yarn start     # solo Metro, eliges plataforma
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Para verificar tipos y lint:
 
-## Learn more
+```bash
+yarn tsc --noEmit
+yarn lint
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+##  Estructura del proyecto
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```
+app/
+├── _layout.tsx                # Stack raíz: (tabs) + measurement/new
+├── (tabs)/
+│   ├── _layout.tsx            # Tabs: Inicio, Resumen, Perfil
+│   ├── index.tsx              # Pantalla Inicio
+│   ├── summary.tsx            # Pantalla Resumen (stats + tabla)
+│   └── profile.tsx            # Pantalla Perfil (registro/edición)
+└── measurement/
+    └── new.tsx                # Pantalla Nueva medida (Stack push)
 
-## Join the community
+components/
+├── LabeledInput.tsx           # ★ Reutilizable: Perfil + Nueva medida
+├── MeasurementCard.tsx        # ★ Reutilizable: Inicio + Resumen
+└── StatTile.tsx               # Tarjeta de estadística
 
-Join our community of developers creating universal apps.
+hooks/
+├── useProfile.ts              # ★ Hook personalizado — CRUD de perfil
+└── useMeasurements.ts         # ★ Hook personalizado — CRUD + stats de medidas
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+db/
+└── database.ts                # Esquema y acceso SQLite (tablas profile + measurements)
+
+theme/
+├── colors.ts                  # Paletas claro / oscuro
+└── useThemeColors.ts          # Hook que selecciona paleta según el sistema
+
+types/
+└── health.ts                  # Profile, Measurement (unión discriminada), Stats
+```
+
+##  Arquitectura
+
+- **Navegación combinada Stack + Tabs**: el Stack raíz envuelve a las Tabs y
+  registra la pantalla de Nueva medida como modal apilado. Esto cumple el
+  requisito del enunciado de usar las dos APIs de Expo Router a la vez.
+- **Capa de datos aislada**: `db/database.ts` es el único módulo que toca
+  `expo-sqlite`. Las pantallas siempre acceden a los datos a través de los
+  hooks `useProfile` y `useMeasurements`, lo que mantiene la lógica de negocio
+  centralizada y facilita los tests.
+- **Tipos discriminados**: `Measurement` es una unión discriminada por `type`
+  (`'glucose' | 'pressure'`), de modo que TypeScript fuerza a manejar
+  correctamente cada caso en cada pantalla.
+- **Sistema de tema**: una paleta para modo claro y otra para modo oscuro,
+  consumidas en cada componente con un hook que sigue el esquema del sistema.
+
+##  Requisitos del enunciado
+
+| Requisito | Cómo se cumple |
+|-----------|----------------|
+| Expo Router con **Stack y Tabs** | `app/_layout.tsx` (Stack) → `(tabs)` (Tabs) + `measurement/new` (modal apilado) |
+| Al menos **3 interfaces** | Inicio, Resumen, Perfil, Nueva medida (4) |
+| **Componente reutilizable** en ≥ 2 vistas | `LabeledInput` (Perfil + Nueva medida); `MeasurementCard` (Inicio + Resumen) |
+| **Hook personalizado** | `useProfile` y `useMeasurements` |
+| **SQLite** | Tablas `profile` y `measurements` en `health.db` |
+
+## 👥 Equipo
+
+Actividad 2 — Grupo 4

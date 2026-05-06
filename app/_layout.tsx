@@ -1,24 +1,33 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useThemeColors } from '@/theme/useThemeColors';
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
-
+/**
+ * Layout raíz de la app: Stack que contiene las Tabs y la pantalla
+ * `measurement/new` (modal). Lee la paleta del tema actual para que
+ * el header se adapte a modo claro / oscuro.
+ */
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const palette = useThemeColors();
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
+    <>
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: palette.primary },
+          headerTintColor: palette.primaryOn,
+          headerTitleStyle: { fontWeight: '700' },
+          contentStyle: { backgroundColor: palette.background },
+        }}
+      >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        <Stack.Screen
+          name="measurement/new"
+          options={{ title: 'Nueva medida', presentation: 'modal' }}
+        />
       </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+      <StatusBar style={palette.scheme === 'dark' ? 'light' : 'light'} />
+    </>
   );
 }
