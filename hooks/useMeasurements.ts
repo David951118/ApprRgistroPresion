@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 
 import {
   deleteMeasurement,
@@ -118,29 +119,31 @@ export function useMeasurements(): UseMeasurementsResult {
     }
   }, []);
 
-  useEffect(() => {
-    let isMounted = true;
-    (async () => {
-      try {
-        await initDatabase();
-        if (isMounted) {
-          await refresh();
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+      (async () => {
+        try {
+          await initDatabase();
+          if (isMounted) {
+            await refresh();
+          }
+        } catch (error) {
+          if (isMounted) {
+            setErrorMessage(
+              error instanceof Error
+                ? error.message
+                : 'No se pudo inicializar la base de datos',
+            );
+            setIsLoading(false);
+          }
         }
-      } catch (error) {
-        if (isMounted) {
-          setErrorMessage(
-            error instanceof Error
-              ? error.message
-              : 'No se pudo inicializar la base de datos',
-          );
-          setIsLoading(false);
-        }
-      }
-    })();
-    return () => {
-      isMounted = false;
-    };
-  }, [refresh]);
+      })();
+      return () => {
+        isMounted = false;
+      };
+    }, [refresh])
+  );
 
   const addGlucose = useCallback(
     async (glucoseInput: GlucoseInput): Promise<void> => {
