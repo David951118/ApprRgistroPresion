@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 
 import { initDatabase, selectProfile, upsertProfile } from '@/db/database';
 import type { Profile, ProfileInput } from '@/types/health';
@@ -39,29 +40,31 @@ export function useProfile(): UseProfileResult {
     }
   }, []);
 
-  useEffect(() => {
-    let isMounted = true;
-    (async () => {
-      try {
-        await initDatabase();
-        if (isMounted) {
-          await refresh();
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+      (async () => {
+        try {
+          await initDatabase();
+          if (isMounted) {
+            await refresh();
+          }
+        } catch (error) {
+          if (isMounted) {
+            setErrorMessage(
+              error instanceof Error
+                ? error.message
+                : 'No se pudo inicializar la base de datos',
+            );
+            setIsLoading(false);
+          }
         }
-      } catch (error) {
-        if (isMounted) {
-          setErrorMessage(
-            error instanceof Error
-              ? error.message
-              : 'No se pudo inicializar la base de datos',
-          );
-          setIsLoading(false);
-        }
-      }
-    })();
-    return () => {
-      isMounted = false;
-    };
-  }, [refresh]);
+      })();
+      return () => {
+        isMounted = false;
+      };
+    }, [refresh])
+  );
 
   const saveProfile = useCallback(
     async (profileInput: ProfileInput): Promise<void> => {

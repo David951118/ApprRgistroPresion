@@ -30,6 +30,7 @@ const RECENT_LIMIT = 5;
  * la pantalla `measurement/new` del Stack raíz como modal.
  */
 export default function HomeScreen() {
+  // Trigger fast refresh
   const router = useRouter();
   const palette = useThemeColors();
   const styles = useMemo(() => makeStyles(palette), [palette]);
