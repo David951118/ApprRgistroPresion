@@ -120,3 +120,7 @@ types/
 ## 👥 Equipo
 
 Actividad 2 — Grupo 4
+
+1. David Sebastián Montes Zarama
+2. Vanessa Hernández Maldonado
+3. Héctor Fabio Gutiérrez Martínez
